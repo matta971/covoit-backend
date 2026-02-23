@@ -1,0 +1,19 @@
+meta {
+  name: My Rides (Driver)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/driver/me/rides
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

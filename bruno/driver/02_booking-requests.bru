@@ -1,0 +1,19 @@
+meta {
+  name: My Booking Requests (Driver)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/driver/me/booking-requests
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

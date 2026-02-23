@@ -1,0 +1,29 @@
+meta {
+  name: Login Passenger
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{passengerEmail}}",
+    "password": "{{passengerPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isDefined
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setVar("passengerToken", res.body.accessToken);
+  }
+}

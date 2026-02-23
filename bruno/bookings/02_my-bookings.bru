@@ -1,0 +1,19 @@
+meta {
+  name: My Bookings
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/me/bookings
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{passengerToken}}
+}
+
+assert {
+  res.status: eq 200
+}

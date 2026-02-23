@@ -1,0 +1,19 @@
+meta {
+  name: Reject Booking (Cleanup - expects 403 after accept)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/driver/me/booking-requests/{{bookingRequestId}}/reject
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: in [403, 409]
+}

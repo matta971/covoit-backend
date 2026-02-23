@@ -1,0 +1,25 @@
+meta {
+  name: Search Rides
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/rides
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  from: Paris
+  to: Lyon
+  date:
+}
+
+assert {
+  res.status: eq 200
+}
