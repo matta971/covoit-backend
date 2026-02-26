@@ -19,6 +19,22 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  # ================================================================
+  # ActiveMQ Artemis — broker embedded (même JVM, pas de Docker)
+  #
+  # ✅ Avantage : zéro infra réseau, zéro port exposé
+  # 🔄 Change : event_publication JPA reste actif pour la persistance
+  #    et le retry. Artemis s'y ajoute comme transport externe.
+  # ================================================================
+  artemis:
+    mode: embedded
+    embedded:
+      persistent: false   # POC : redémarre proprement sans données résiduelles
+      queues: >-
+        rides.RidePublishedEvent,rides.RideCanceledEvent,bookings.BookingRequestedEvent,bookings.BookingAcceptedEvent,bookings.BookingRejectedEvent,bookings.BookingCanceledEvent,auth.UserRegisteredEvent
+  jms:
+    pub-sub-domain: false   # queues point-à-point (pas de topics pub/sub)
+
 app:
   jwt:
     secret: "${JWT_SECRET}"

@@ -1,5 +1,6 @@
 package com.nc.sinpase.poc.modulith.covoit.auth.adapters.out.security;
 
+import com.nc.sinpase.poc.modulith.covoit.auth.domain.TokenValidator;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,12 +16,22 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Injecte TokenValidator (interface) au lieu de JwtTokenProvider (classe concrète).
+ *
+ * ✅ Avantage : quand TokenIssuer sera supprimé de JwtTokenProvider en Phase 2,
+ * ce filtre n'a AUCUNE modification à faire. Il continue de fonctionner avec
+ * n'importe quelle implémentation de TokenValidator.
+ *
+ * 🔄 Change : couplage réduit (concret → interface). En Phase 3 (RS256),
+ * seule l'implémentation de TokenValidator change — pas ce filtre.
+ */
 class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final TokenValidator tokenValidator;
 
-    JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
-        this.jwtTokenProvider = jwtTokenProvider;
+    JwtAuthenticationFilter(TokenValidator tokenValidator) {
+        this.tokenValidator = tokenValidator;
     }
 
     @Override
@@ -30,7 +41,7 @@ class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            jwtTokenProvider.parseToken(token).ifPresent(claims -> {
+            tokenValidator.validate(token).ifPresent(claims -> {
                 String userId = claims.getSubject();
                 List<String> roles = getRoles(claims);
 
