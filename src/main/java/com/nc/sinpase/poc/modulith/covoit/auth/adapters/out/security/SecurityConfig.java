@@ -1,5 +1,6 @@
 package com.nc.sinpase.poc.modulith.covoit.auth.adapters.out.security;
 
+import com.nc.sinpase.poc.modulith.covoit.auth.domain.TokenValidator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,14 +18,19 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * ✅ Avantage : injecte TokenValidator (interface) — en Phase 2, quand
+ * TokenIssuer disparaît de JwtTokenProvider, cette classe n'a aucune
+ * modification à faire.
+ */
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final TokenValidator tokenValidator;
 
-    SecurityConfig(JwtTokenProvider jwtTokenProvider) {
-        this.jwtTokenProvider = jwtTokenProvider;
+    SecurityConfig(TokenValidator tokenValidator) {
+        this.tokenValidator = tokenValidator;
     }
 
     @Bean
@@ -48,7 +54,7 @@ class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(tokenValidator),
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
