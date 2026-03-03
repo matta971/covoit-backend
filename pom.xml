@@ -102,6 +102,30 @@
             <version>8.13.50</version>
         </dependency>
 
+        <!-- ============================================================ -->
+        <!-- MESSAGING — ActiveMQ Artemis embedded                        -->
+        <!-- Broker tourne dans la même JVM — aucun container supplémentaire -->
+        <!-- Requis pour l'externalisation des events vers les futurs      -->
+        <!-- microservices (auth-service, notifications-service)           -->
+        <!-- ============================================================ -->
+
+        <!-- Client JMS — auto-configure ConnectionFactory vers Artemis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-artemis</artifactId>
+        </dependency>
+        <!-- Serveur Artemis embarqué dans le même processus JVM -->
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-jakarta-server</artifactId>
+        </dependency>
+        <!-- Spring Modulith — pont entre @Externalized et le broker JMS -->
+        <!-- Version résolue par spring-modulith-bom:2.0.2              -->
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-events-jms</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>

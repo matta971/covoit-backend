@@ -11,6 +11,7 @@ import com.nc.sinpase.poc.modulith.covoit.identity.UserCredentials;
 import com.nc.sinpase.poc.modulith.covoit.identity.UserService;
 import com.nc.sinpase.poc.modulith.covoit.identity.UserView;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,15 +33,18 @@ public class AuthService {
     private final RefreshSessionRepository sessionRepository;
     private final TokenIssuer tokenIssuer;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AuthService(UserService userService,
                        RefreshSessionRepository sessionRepository,
                        TokenIssuer tokenIssuer,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       ApplicationEventPublisher eventPublisher) {
         this.userService = userService;
         this.sessionRepository = sessionRepository;
         this.tokenIssuer = tokenIssuer;
         this.passwordEncoder = passwordEncoder;
+        this.eventPublisher = eventPublisher;
     }
 
     public AuthTokenView register(RegisterCommand command, HttpServletRequest request) {
@@ -52,6 +56,11 @@ public class AuthService {
                 command.email(), passwordHash, command.displayName(),
                 command.phoneDialCode(), command.phoneNumber()
         ));
+
+        // Publie l'event d'inscription pour cohérence inter-services.
+        // ✅ Spring Modulith persiste l'event dans event_publication AVANT
+        //    de l'envoyer sur la queue JMS — garantie at-least-once.
+        eventPublisher.publishEvent(new UserRegisteredEvent(user.id(), user.email(), user.displayName()));
 
         return issueTokens(user.id(), user.roles().stream().toList(),
                 extractDeviceId(request), request.getHeader("User-Agent"), request.getRemoteAddr());
