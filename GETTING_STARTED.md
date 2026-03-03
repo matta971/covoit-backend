@@ -12,7 +12,37 @@
 
 ---
 
-## 1. Démarrer la base de données
+## 1. Configurer les secrets locaux
+
+Deux fichiers sont nécessaires pour le développement local (non commités, gitignorés) :
+
+### `.env` — mot de passe PostgreSQL pour Docker Compose
+
+Créer un fichier `.env` à la racine du projet :
+
+```
+POSTGRES_PASSWORD=covoit
+```
+
+### `src/main/resources/application-local.yaml` — secrets Spring Boot
+
+Créer ce fichier dans `src/main/resources/` :
+
+```yaml
+spring:
+  datasource:
+    password: covoit
+
+app:
+  jwt:
+    secret: "Y292b2l0LVBPQ1NlY3JldEtleUZvckpXVFNpZ25pbmdDaGFuZ2VJblByb2R1Y3Rpb24h"
+```
+
+> En production, ces valeurs sont fournies via les variables d'environnement `POSTGRES_PASSWORD`, `DB_PASSWORD` et `JWT_SECRET`.
+
+---
+
+## 2. Démarrer la base de données
 
 Ouvrir un terminal dans le dossier `covoit-backend` et lancer :
 
@@ -30,7 +60,9 @@ Vous devez voir un container `postgres:16` en statut `Up`.
 
 ---
 
-## 2. Lancer le backend
+## 3. Lancer le backend
+
+Le profil `local` est activé par défaut (`SPRING_PROFILES_ACTIVE=local`), il charge automatiquement `application-local.yaml`.
 
 ### Windows (PowerShell)
 
@@ -58,7 +90,7 @@ L'API est accessible sur **http://localhost:8080**.
 
 ---
 
-## 3. Tester avec Bruno
+## 4. Tester avec Bruno
 
 1. Ouvrir Bruno
 2. **Open Collection** → sélectionner le dossier `covoit-backend/bruno/`
@@ -100,7 +132,7 @@ cleanup/03_reject-booking
 
 ---
 
-## 4. Arrêter l'environnement
+## 5. Arrêter l'environnement
 
 Arrêter le backend : `Ctrl+C` dans le terminal
 
