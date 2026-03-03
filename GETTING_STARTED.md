@@ -14,31 +14,24 @@
 
 ## 1. Configurer les secrets locaux
 
-Deux fichiers sont nécessaires pour le développement local (non commités, gitignorés) :
+Deux fichiers sont nécessaires pour le développement local. Des **fichiers exemples** sont fournis dans le repo — il suffit de les copier et de remplacer les valeurs :
 
 ### `.env` — mot de passe PostgreSQL pour Docker Compose
 
-Créer un fichier `.env` à la racine du projet :
-
-```
-POSTGRES_PASSWORD=covoit
+```bash
+cp .env.example .env
+# puis éditer .env avec les vraies valeurs
 ```
 
 ### `src/main/resources/application-local.yaml` — secrets Spring Boot
 
-Créer ce fichier dans `src/main/resources/` :
-
-```yaml
-spring:
-  datasource:
-    password: covoit
-
-app:
-  jwt:
-    secret: "Y292b2l0LVBPQ1NlY3JldEtleUZvckpXVFNpZ25pbmdDaGFuZ2VJblByb2R1Y3Rpb24h"
+```bash
+cp src/main/resources/application-local.yaml.example src/main/resources/application-local.yaml
+# puis éditer application-local.yaml avec les vraies valeurs
 ```
 
-> En production, ces valeurs sont fournies via les variables d'environnement `POSTGRES_PASSWORD`, `DB_PASSWORD` et `JWT_SECRET`.
+> Ces deux fichiers sont **gitignorés** — ils ne seront jamais commités.
+> En production, les valeurs sont fournies via les variables d'environnement `POSTGRES_PASSWORD`, `DB_PASSWORD` et `JWT_SECRET`.
 
 ---
 

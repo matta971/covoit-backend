@@ -1,0 +1,11 @@
+# Copier ce fichier en application-local.yaml et renseigner les valeurs réelles.
+# Ce fichier est COMMITÉ (valeurs fictives).
+# application-local.yaml est GITIGNORÉE (valeurs réelles).
+
+spring:
+  datasource:
+    password: CHANGE_ME   # mot de passe PostgreSQL (covoit en local par défaut)
+
+app:
+  jwt:
+    secret: "CHANGE_ME_MIN_32_CHARS"   # clé HMAC-SHA256, min. 32 caractères
