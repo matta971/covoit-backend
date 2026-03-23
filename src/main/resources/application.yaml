@@ -9,7 +9,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/covoit}
     username: ${DB_USERNAME:covoit}
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:covoit}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -44,3 +44,15 @@ app:
     refresh-token-expiration-seconds: 2592000
     issuer: covoit-backend
     audience: covoit-app
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    admin:
+      auto-create: false
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
