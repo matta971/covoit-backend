@@ -7,6 +7,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,7 +34,10 @@ public class RideService implements RideCapacityPort {
         eventPublisher.publishEvent(new RidePublishedEvent(
                 ride.getId(), ride.getDriverId(), ride.getFromLocation(),
                 ride.getToLocation(), ride.getDepartureTime()));
-        return toView(ride);
+
+        //throw new RuntimeException("💥 Simulated crash after save");
+
+       return toView(ride);
     }
 
     @Transactional(readOnly = true)
