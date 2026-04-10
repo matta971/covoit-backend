@@ -1,4 +1,4 @@
-/*package com.nc.sinpase.poc.modulith.covoit.rides.adapters.out.kafka;
+package com.nc.sinpase.poc.modulith.covoit.rides.adapters.out.kafka;
 
 import com.nc.sinpase.poc.modulith.covoit.rides.RidePublishedEvent;
 import org.slf4j.Logger;
@@ -7,7 +7,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
@@ -21,7 +20,7 @@ public class RideKafkaProducer {
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener
     void on(RidePublishedEvent event) {
         kafkaTemplate.send("ride-published", event.rideId().toString(), event)
                 .whenComplete((result, ex) -> {
@@ -36,4 +35,4 @@ public class RideKafkaProducer {
                 });
     }
 
-}*/
+}

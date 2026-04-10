@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: covoit-backend
+  kafka:
+    bootstrap-servers: localhost:9092, localhost:9093, localhost:9094
+  docker:
+    compose:
+      enabled: false
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/covoit}
+    username: ${DB_USERNAME:covoit}
+    password: ${DB_PASSWORD:covoit}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  # ================================================================
+  # ActiveMQ Artemis — broker embedded (même JVM, pas de Docker)
+  #
+  # ✅ Avantage : zéro infra réseau, zéro port exposé
+  # 🔄 Change : event_publication JPA reste actif pour la persistance
+  #    et le retry. Artemis s'y ajoute comme transport externe.
+  # ================================================================
+  modulith:
+    events:
+      republication:
+        enabled: false   # e2e : désactive le scheduler de retry pour éviter les deadlocks lors du TRUNCATE
+
+  artemis:
+    mode: embedded
+    embedded:
+      persistent: false   # POC : redémarre proprement sans données résiduelles
+      queues: >-
+        rides.RidePublishedEvent,rides.RideCanceledEvent,bookings.BookingRequestedEvent,bookings.BookingAcceptedEvent,bookings.BookingRejectedEvent,bookings.BookingCanceledEvent,auth.UserRegisteredEvent
+  jms:
+    pub-sub-domain: false   # queues point-à-point (pas de topics pub/sub)
+
+app:
+  jwt:
+    secret: "72YjeeMLljRnIarus38/PyNad77vH9lmj5ppFsxLuPE="
+    access-token-expiration-seconds: 900
+    refresh-token-expiration-seconds: 2592000
+    issuer: covoit-backend
+    audience: covoit-app
+
+

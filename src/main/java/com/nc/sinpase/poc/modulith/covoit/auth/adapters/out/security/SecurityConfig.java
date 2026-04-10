@@ -1,6 +1,7 @@
 package com.nc.sinpase.poc.modulith.covoit.auth.adapters.out.security;
 
 import com.nc.sinpase.poc.modulith.covoit.auth.domain.TokenValidator;
+import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,9 +28,11 @@ import java.util.List;
 class SecurityConfig {
 
     private final TokenValidator tokenValidator;
+    private final Environment environment;
 
-    SecurityConfig(TokenValidator tokenValidator) {
+    SecurityConfig(TokenValidator tokenValidator, Environment environment) {
         this.tokenValidator = tokenValidator;
+        this.environment = environment;
     }
 
     @Bean
@@ -44,6 +47,8 @@ class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/refresh"
                         ).permitAll()
+                        .requestMatchers("/api/test-support/**").access((authentication, context) ->
+                                new org.springframework.security.authorization.AuthorizationDecision(isE2eProfileActive()))
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(tokenValidator),
@@ -67,5 +72,9 @@ class SecurityConfig {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    private boolean isE2eProfileActive() {
+        return List.of(environment.getActiveProfiles()).contains("e2e");
     }
 }
