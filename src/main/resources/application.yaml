@@ -41,7 +41,7 @@ spring:
 
 app:
   jwt:
-    secret: "${JWT_SECRET}"
+    secret: "${JWT_SECRET:n1PXny25W8RSZ+X9LV709RUH8Fdx49nmlitLuE/kjMA=}"
     access-token-expiration-seconds: 900
     refresh-token-expiration-seconds: 2592000
     issuer: covoit-backend

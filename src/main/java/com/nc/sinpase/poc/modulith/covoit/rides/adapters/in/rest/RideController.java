@@ -1,5 +1,4 @@
 package com.nc.sinpase.poc.modulith.covoit.rides.adapters.in.rest;
-
 import com.nc.sinpase.poc.modulith.covoit.CurrentUserProvider;
 import com.nc.sinpase.poc.modulith.covoit.rides.PublishRideCommand;
 import com.nc.sinpase.poc.modulith.covoit.rides.RideService;
@@ -10,12 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +23,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/rides")
 class RideController {
-
     private final RideService rideService;
     private final CurrentUserProvider currentUserProvider;
 
@@ -53,5 +52,20 @@ class RideController {
     @GetMapping("/{rideId}")
     RideView getById(@PathVariable UUID rideId) {
         return rideService.findById(rideId);
+    }
+
+    @PutMapping("/{rideId}")
+    RideView updateRide(
+            @PathVariable UUID rideId,
+            @RequestBody @Valid UpdateRideRequest request) {
+        UUID userId = currentUserProvider.getUserId();
+        return rideService.update(rideId, userId, request);
+    }
+
+    @DeleteMapping("/{rideId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void deleteRide(@PathVariable UUID rideId) {
+        UUID userId = currentUserProvider.getUserId();
+        rideService.delete(rideId, userId);
     }
 }

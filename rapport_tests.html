@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Rapport de tests — covoit-backend</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; background: #f5f5f5; color: #333; max-width: 1100px; margin: auto; }
+  h1 { color: #1a1a2e; border-bottom: 3px solid #4ec9b0; padding-bottom: 10px; }
+  h2 { color: #16213e; margin-top: 40px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  th { background: #16213e; color: white; padding: 10px 14px; text-align: left; }
+  td { padding: 9px 14px; border-bottom: 1px solid #eee; font-size: 14px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9f9f9; }
+  .pass { color: #27ae60; font-weight: 600; }
+  .fail { color: #e74c3c; font-weight: 600; }
+  .warn { color: #f39c12; font-weight: 600; }
+  .summary { display: flex; gap: 24px; margin-top: 30px; }
+  .summary-box { padding: 20px 30px; border-radius: 10px; text-align: center; flex: 1; }
+  .summary-box h3 { margin: 0 0 6px; font-size: 32px; }
+  .summary-box p { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+  .box-pass { background: #eafaf1; color: #27ae60; }
+  .box-fail { background: #fdedec; color: #e74c3c; }
+  .box-warn { background: #fef9e7; color: #f39c12; }
+  .box-total { background: #eaf0fb; color: #2980b9; }
+  .meta { color: #666; font-size: 13px; margin-bottom: 30px; }
+  .bug { background: #fff5f5; }
+  code { background: #eee; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>🚀 Rapport de tests — covoit-backend</h1>
+<p class="meta">URL : <code>http://localhost:8080</code> &nbsp;|&nbsp; Date : 2026-03-18 &nbsp;|&nbsp; Branch : <code>setup/gstack</code></p>
+
+<div class="summary">
+  <div class="summary-box box-pass"><h3>36</h3><p>✅ PASS</p></div>
+  <div class="summary-box box-fail"><h3>4</h3><p>❌ FAIL</p></div>
+  <div class="summary-box box-warn"><h3>8</h3><p>⚠️ WARN</p></div>
+  <div class="summary-box box-total"><h3>48</h3><p>Total</p></div>
+</div>
+
+<h2>Auth</h2>
+<table>
+  <tr><th>Scénario</th><th>Attendu</th><th>Obtenu</th><th>Résultat</th></tr>
+  <tr><td>Inscription valide</td><td>201 + tokens + userId</td><td>201 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>expiresIn positif</td><td>expiresIn &gt; 0</td><td>900 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Email dupliqué</td><td>409 USER_ALREADY_EXISTS</td><td>409 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Password trop court (&lt;12 chars)</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Inscription sans email</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Inscription sans displayName</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Inscription sans téléphone</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr class="bug"><td>Inscription sans body</td><td>400</td><td>500 ✗</td><td class="fail">❌ FAIL</td></tr>
+  <tr><td>Login valide</td><td>200 + tokens + userId</td><td>200 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Mauvais mot de passe</td><td>401 UNAUTHENTICATED</td><td>401 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Email inexistant</td><td>401 UNAUTHENTICATED</td><td>401 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Login sans email</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Login sans password</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Refresh valide</td><td>200 + nouveau accessToken</td><td>200 ✓</td><td class="warn">⚠️ PASS (token identique — rotation non activée ?)</td></tr>
+  <tr><td>Refresh token invalide</td><td>401 UNAUTHENTICATED</td><td>401 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Refresh après logout (token révoqué)</td><td>401 UNAUTHENTICATED</td><td>401 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Logout valide</td><td>204</td><td>204 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Logout sans authentification</td><td>401</td><td>403 ✗</td><td class="warn">⚠️ WARN (403 vs 401 attendu)</td></tr>
+  <tr><td>GET /api/me avec token</td><td>200 + profil complet</td><td>200 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>GET /api/me sans token</td><td>401</td><td>403 ✗</td><td class="warn">⚠️ WARN (403 vs 401 attendu)</td></tr>
+</table>
+
+<h2>Rides</h2>
+<table>
+  <tr><th>Scénario</th><th>Attendu</th><th>Obtenu</th><th>Résultat</th></tr>
+  <tr><td>Publier trajet valide</td><td>201 + rideId + SCHEDULED</td><td>201 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Publier sans authentification</td><td>401</td><td>403 ✗</td><td class="warn">⚠️ WARN (403 vs 401)</td></tr>
+  <tr><td><code>from</code> vide</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td><code>to</code> vide</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Date de départ dans le passé</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>0 sièges</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Sièges négatifs</td><td>400 VALIDATION_ERROR</td><td>400 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr class="bug"><td>Publier sans body</td><td>400</td><td>500 ✗</td><td class="fail">❌ FAIL</td></tr>
+  <tr><td>GET /api/rides (authentifié)</td><td>200 + liste trajets</td><td>200 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr class="bug"><td>GET /api/rides?from=Paris (filtre)</td><td>200 filtré par from</td><td>200 non filtré ✗</td><td class="fail">❌ FAIL</td></tr>
+  <tr><td>GET /api/rides sans auth</td><td>401</td><td>403 ✗</td><td class="warn">⚠️ WARN</td></tr>
+  <tr><td>GET /api/rides/{id} valide</td><td>200 + détail trajet</td><td>200 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>GET /api/rides/00000000... (inexistant)</td><td>404 NOT_FOUND</td><td>404 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr class="bug"><td>GET /api/rides/not-a-uuid (UUID invalide)</td><td>400</td><td>500 ✗</td><td class="fail">❌ FAIL</td></tr>
+  <tr><td>Conducteur annule son propre trajet</td><td>204</td><td>204 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Annuler trajet déjà annulé</td><td>409 RIDE_NOT_BOOKABLE</td><td>409 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Passager tente d'annuler un trajet</td><td>403 FORBIDDEN</td><td>403 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>GET /api/driver/me/rides</td><td>200 + liste conducteur</td><td>200 ✓</td><td class="pass">✅ PASS</td></tr>
+</table>
+
+<h2>Bookings</h2>
+<table>
+  <tr><th>Scénario</th><th>Attendu</th><th>Obtenu</th><th>Résultat</th></tr>
+  <tr><td>Passager réserve trajet disponible</td><td>201 + bookingRequestId + REQUESTED</td><td>201 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Conducteur réserve son propre trajet</td><td>403 FORBIDDEN</td><td>403 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Réserver trajet inexistant</td><td>404 NOT_FOUND</td><td>404 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Réserver sans authentification</td><td>401</td><td>403 ✗</td><td class="warn">⚠️ WARN</td></tr>
+  <tr><td>Conducteur accepte réservation</td><td>204</td><td>204 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Accepter réservation déjà acceptée</td><td>409 INVALID_STATUS_TRANSITION</td><td>409 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Accepter réservation inexistante</td><td>404 NOT_FOUND</td><td>404 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Conducteur rejette réservation</td><td>204</td><td>204 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Rejeter réservation déjà rejetée</td><td>409 INVALID_STATUS_TRANSITION</td><td>409 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Passager annule réservation REQUESTED</td><td>204</td><td>204 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Annuler réservation déjà annulée</td><td>409 INVALID_STATUS_TRANSITION</td><td>409 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>Passager 2 annule réservation passager 1</td><td>403 FORBIDDEN</td><td>403 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>GET /api/me/bookings</td><td>200 + liste passager</td><td>200 ✓</td><td class="pass">✅ PASS</td></tr>
+  <tr><td>GET /api/me/bookings sans auth</td><td>401</td><td>403 ✗</td><td class="warn">⚠️ WARN</td></tr>
+  <tr><td>GET /api/driver/me/booking-requests</td><td>200 + liste conducteur</td><td>200 ✓</td><td class="pass">✅ PASS</td></tr>
+</table>
+
+<h2>Bugs détectés (❌ FAIL)</h2>
+<table>
+  <tr><th>#</th><th>Endpoint</th><th>Problème</th><th>Priorité</th></tr>
+  <tr><td>1</td><td><code>POST /api/auth/register</code> sans body</td><td>Retourne 500 au lieu de 400 — exception non gérée sur body null</td><td class="fail">HIGH</td></tr>
+  <tr><td>2</td><td><code>POST /api/rides</code> sans body</td><td>Retourne 500 au lieu de 400 — même cause</td><td class="fail">HIGH</td></tr>
+  <tr><td>3</td><td><code>GET /api/rides?from=Paris</code></td><td>Le paramètre <code>from</code> n'est pas pris en compte — tous les trajets sont retournés</td><td class="fail">HIGH</td></tr>
+  <tr><td>4</td><td><code>GET /api/rides/not-a-uuid</code></td><td>UUID mal formé provoque un 500 — doit retourner 400</td><td class="fail">MEDIUM</td></tr>
+</table>
+
+<h2>Avertissements (⚠️ WARN)</h2>
+<p>Spring Security retourne systématiquement <strong>403</strong> pour les requêtes sans token, là où les specs et les features attendent <strong>401</strong>. Cela peut être corrigé en configurant <code>HttpSecurity.exceptionHandling().authenticationEntryPoint()</code> pour renvoyer 401.</p>
+<p>Le <strong>refresh token</strong> renvoie le même <code>accessToken</code> si celui-ci n'a pas encore expiré. Comportement acceptable si intentionnel, sinon activer la rotation de token.</p>
+
+</body>
+</html>

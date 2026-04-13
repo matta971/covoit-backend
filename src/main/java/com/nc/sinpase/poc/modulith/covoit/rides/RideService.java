@@ -1,13 +1,15 @@
 package com.nc.sinpase.poc.modulith.covoit.rides;
 
 import com.nc.sinpase.poc.modulith.covoit.ConcurrentUpdateException;
+import com.nc.sinpase.poc.modulith.covoit.rides.adapters.in.rest.UpdateRideRequest;
 import com.nc.sinpase.poc.modulith.covoit.rides.domain.Ride;
 import com.nc.sinpase.poc.modulith.covoit.rides.domain.RideRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -65,6 +67,35 @@ public class RideService implements RideCapacityPort {
         ride.cancel(byDriverId);
         save(ride);
         eventPublisher.publishEvent(new RideCanceledEvent(ride.getId(), ride.getDriverId()));
+    }
+
+    public RideView update(UUID rideId, UUID driverId, UpdateRideRequest request) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RideNotFoundException(rideId));
+        
+        // Vérifier que le driver actuel est le propriétaire du ride (Horizontal Escalation Protection)
+        if (!ride.getDriverId().equals(driverId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own rides");
+        }
+        
+        ride.update(request.from(), request.to(), request.totalSeats());
+        save(ride);
+        return toView(ride);
+    }
+
+    public void delete(UUID rideId, UUID driverId) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RideNotFoundException(rideId));
+        
+        // Vérifier que le driver actuel est le propriétaire du ride (Horizontal Escalation Protection)
+        if (!ride.getDriverId().equals(driverId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own rides");
+        }
+        
+        // Soft delete - marquer comme CANCELED au lieu de vraiment supprimer
+        ride.cancel(driverId);
+        save(ride);
+        eventPublisher.publishEvent(new RideDeletedEvent(ride.getId(), ride.getDriverId()));
     }
 
     // --- RideCapacityPort ---

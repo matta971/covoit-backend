@@ -46,6 +46,7 @@ class JwtTokenProvider implements TokenIssuer, TokenValidator {
     public String generateAccessToken(UUID userId, Collection<String> roles) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userId.toString())
                 .claim("roles", roles)
                 .issuedAt(new Date(now))

@@ -111,10 +111,13 @@ public class AuthService {
 
     public void logout(String rawRefreshToken) {
         String hash = hashToken(rawRefreshToken);
-        sessionRepository.findByTokenHash(hash).ifPresent(session -> {
-            session.revoke();
-            sessionRepository.save(session);
-        });
+        RefreshSession session = sessionRepository.findByTokenHash(hash)
+                .orElseThrow(InvalidTokenException::new);
+        if (!session.isValid()) {
+            throw new InvalidTokenException();
+        }
+        session.revoke();
+        sessionRepository.save(session);
     }
 
     public void logoutAll(UUID userId) {

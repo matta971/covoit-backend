@@ -12,10 +12,10 @@ public class Ride {
 
     private final UUID id;
     private final UUID driverId;
-    private final String fromLocation;
-    private final String toLocation;
+    private String fromLocation;
+    private String toLocation;
     private final Instant departureTime;
-    private final int totalSeats;
+    private int totalSeats;
     private int availableSeats;
     private RideStatus status;
     private final Integer version;
@@ -66,6 +66,19 @@ public class Ride {
             throw new RideNotBookableException("already canceled");
         }
         status = RideStatus.CANCELED;
+        updatedAt = Instant.now();
+    }
+
+    public void update(String from, String to, Integer totalSeatsValue) {
+        if (from != null && !from.isBlank()) {
+            this.fromLocation = from;
+        }
+        if (to != null && !to.isBlank()) {
+            this.toLocation = to;
+        }
+        if (totalSeatsValue != null && totalSeatsValue > 0) {
+            this.totalSeats = totalSeatsValue;
+        }
         updatedAt = Instant.now();
     }
 

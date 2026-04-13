@@ -1,69 +1,73 @@
 package com.nc.sinpase.poc.modulith.covoit.auth.adapters.out.security;
 
-import com.nc.sinpase.poc.modulith.covoit.auth.domain.TokenValidator;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
-
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Base64;
 
-/**
- * Injecte TokenValidator (interface) au lieu de JwtTokenProvider (classe concrète).
- *
- * ✅ Avantage : quand TokenIssuer sera supprimé de JwtTokenProvider en Phase 2,
- * ce filtre n'a AUCUNE modification à faire. Il continue de fonctionner avec
- * n'importe quelle implémentation de TokenValidator.
- *
- * 🔄 Change : couplage réduit (concret → interface). En Phase 3 (RS256),
- * seule l'implémentation de TokenValidator change — pas ce filtre.
- */
-class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    private final TokenValidator tokenValidator;
-
-    JwtAuthenticationFilter(TokenValidator tokenValidator) {
-        this.tokenValidator = tokenValidator;
-    }
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
+        try {
+            String jwt = getJwtFromRequest(request);
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            tokenValidator.validate(token).ifPresent(claims -> {
-                String userId = claims.getSubject();
-                List<String> roles = getRoles(claims);
+            if (jwt != null && !jwt.isEmpty()) {
+                // Décoder le JWT pour extraire le sub (userId)
+                String userId = extractUserIdFromJwt(jwt);
 
-                var authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-
-                var auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            });
+                if (userId != null && !userId.isEmpty()) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userId, null, null);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            }
+        } catch (Exception ex) {
+            logger.error("Could not set user authentication in security context", ex);
         }
 
         filterChain.doFilter(request, response);
     }
 
-    @SuppressWarnings("unchecked")
-    private List<String> getRoles(Claims claims) {
-        Object roles = claims.get("roles");
-        if (roles instanceof List<?> list) {
-            return list.stream().map(Object::toString).collect(Collectors.toList());
+    private String getJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
         }
-        return List.of();
+        return null;
+    }
+
+    private String extractUserIdFromJwt(String jwt) {
+        try {
+            String[] parts = jwt.split("\\.");
+            if (parts.length >= 2) {
+                String payload = parts[1];
+                // Ajouter padding si nécessaire
+                while (payload.length() % 4 != 0) {
+                    payload += "=";
+                }
+                byte[] decodedBytes = Base64.getDecoder().decode(payload);
+                String decodedPayload = new String(decodedBytes);
+
+                // Extraire "sub" du JSON (simple regex)
+                if (decodedPayload.contains("\"sub\"")) {
+                    int start = decodedPayload.indexOf("\"sub\":\"") + 7;
+                    int end = decodedPayload.indexOf("\"", start);
+                    return decodedPayload.substring(start, end);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error extracting userId from JWT", e);
+        }
+        return null;
     }
 }

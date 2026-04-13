@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url:      jdbc:postgresql://localhost:5432/covoit
+    username: covoit
+    password: covoit
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  docker:
+    compose:
+      enabled: false
+
+  # Disable JMS/Artemis in tests: we test the HTTP API, not event propagation
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jms.artemis.ArtemisAutoConfiguration
+      - org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration
+      - org.springframework.modulith.events.jms.JmsEventExternalizerConfiguration
+
+app:
+  jwt:
+    secret: "n1PXny25W8RSZ+X9LV709RUH8Fdx49nmlitLuE/kjMA="
+    access-token-expiration-seconds: 900
+    refresh-token-expiration-seconds: 2592000
+    issuer: covoit-backend
+    audience: covoit-app
