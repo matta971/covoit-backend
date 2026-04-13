@@ -1,7 +1,5 @@
 package com.nc.sinpase.poc.modulith.covoit.auth.adapters.out.security;
 
-import com.nc.sinpase.poc.modulith.covoit.auth.domain.TokenValidator;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,10 +25,10 @@ import java.util.List;
 @EnableWebSecurity
 class SecurityConfig {
 
-    private final TokenValidator tokenValidator;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    SecurityConfig(TokenValidator tokenValidator) {
-        this.tokenValidator = tokenValidator;
+    SecurityConfig(JwtTokenProvider jwtTokenProvider) {
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Bean
@@ -50,11 +48,7 @@ class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-                )
-                .addFilterBefore(new JwtAuthenticationFilter(tokenValidator),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

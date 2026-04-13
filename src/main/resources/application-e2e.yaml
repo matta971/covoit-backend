@@ -1,8 +1,6 @@
 spring:
   application:
     name: covoit-backend
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
   kafka:
     bootstrap-servers: localhost:9092, localhost:9093, localhost:9094
   docker:
@@ -30,6 +28,11 @@ spring:
   # 🔄 Change : event_publication JPA reste actif pour la persistance
   #    et le retry. Artemis s'y ajoute comme transport externe.
   # ================================================================
+  modulith:
+    events:
+      republication:
+        enabled: false   # e2e : désactive le scheduler de retry pour éviter les deadlocks lors du TRUNCATE
+
   artemis:
     mode: embedded
     embedded:
@@ -41,7 +44,7 @@ spring:
 
 app:
   jwt:
-    secret: "${JWT_SECRET}"
+    secret: "72YjeeMLljRnIarus38/PyNad77vH9lmj5ppFsxLuPE="
     access-token-expiration-seconds: 900
     refresh-token-expiration-seconds: 2592000
     issuer: covoit-backend

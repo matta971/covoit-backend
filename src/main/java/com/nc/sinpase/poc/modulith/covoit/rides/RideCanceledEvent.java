@@ -1,5 +1,9 @@
 package com.nc.sinpase.poc.modulith.covoit.rides;
 
+<<<<<<< HEAD
+=======
+import com.nc.sinpase.poc.modulith.covoit.events.domain.Event;
+>>>>>>> origin/feat/playwright
 import org.springframework.modulith.events.Externalized;
 
 import java.util.UUID;
