@@ -1,11 +1,5 @@
 package com.nc.sinpase.poc.modulith.covoit.e2e;
 
-import com.nc.sinpase.poc.modulith.covoit.identity.CreateUserCommand;
-import com.nc.sinpase.poc.modulith.covoit.identity.UserService;
-import com.nc.sinpase.poc.modulith.covoit.identity.UserView;
-import com.nc.sinpase.poc.modulith.covoit.rides.PublishRideCommand;
-import com.nc.sinpase.poc.modulith.covoit.rides.RideService;
-import com.nc.sinpase.poc.modulith.covoit.rides.RideView;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,29 +12,17 @@ import java.util.UUID;
 
 @Service
 @Transactional
-class E2eTestSupportService {
-
-    private static final String DEFAULT_PASSWORD = "Password1234xxx";
-    private static final String DEFAULT_DRIVER_EMAIL = "test@test.com";
-    private static final String DEFAULT_PASSENGER_EMAIL = "passager@test.com";
-    private static final String DEFAULT_ROLE_NAME = "ROLE_USER";
+public class E2eTestSupportService {
 
     private final JdbcTemplate jdbcTemplate;
-    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
-    private final RideService rideService;
 
-    E2eTestSupportService(JdbcTemplate jdbcTemplate,
-                          UserService userService,
-                          PasswordEncoder passwordEncoder,
-                          RideService rideService) {
+    public E2eTestSupportService(JdbcTemplate jdbcTemplate, PasswordEncoder passwordEncoder) {
         this.jdbcTemplate = jdbcTemplate;
-        this.userService = userService;
         this.passwordEncoder = passwordEncoder;
-        this.rideService = rideService;
     }
 
-    void resetDatabase() {
+    public void resetDatabase() {
         // DELETE en ordre FK (enfants avant parents) pour éviter les deadlocks
         // que TRUNCATE CASCADE provoque avec le scheduler de republication de Modulith
         jdbcTemplate.execute("DELETE FROM booking_requests");
@@ -51,117 +33,99 @@ class E2eTestSupportService {
         jdbcTemplate.execute("DELETE FROM user_roles");
         jdbcTemplate.execute("DELETE FROM users");
         jdbcTemplate.execute("DELETE FROM roles");
+    }
 
-        jdbcTemplate.update(
+    public void seedRoles(List<RoleRow> rows) {
+        jdbcTemplate.batchUpdate(
                 "INSERT INTO roles (id, name) VALUES (?, ?)",
-                UUID.randomUUID(),
-                DEFAULT_ROLE_NAME
-        );
+                rows, rows.size(),
+                (ps, row) -> {
+                    ps.setObject(1, row.id());
+                    ps.setString(2, row.name());
+                });
     }
 
-    SeededUsersResponse seedDefaultUsers() {
-        UserView driver = ensureUser(
-                DEFAULT_DRIVER_EMAIL,
-                "Conducteur Test",
-                "+33",
-                "612345678"
-        );
-        UserView passenger = ensureUser(
-                DEFAULT_PASSENGER_EMAIL,
-                "Passager Test",
-                "+33",
-                "698765432"
-        );
-
-        return new SeededUsersResponse(driver.id().toString(), passenger.id().toString(), DEFAULT_PASSWORD);
-    }
-
-    RideView seedRide(SeedRideRequest request) {
-        UserView driver = userService.findByEmail(request.driverEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + request.driverEmail()));
-
-        return rideService.publish(new PublishRideCommand(
-                driver.id(),
-                request.from(),
-                request.to(),
-                request.departureTime(),
-                request.totalSeats()
-        ));
-    }
-
-    void seedDataset(SeedDatasetRequest req) {
+    public void seedUsers(List<UserRow> rows) {
         Instant now = Instant.now();
-
-        for (SeedDatasetRequest.UserSeed u : req.users()) {
-            jdbcTemplate.update("""
-                    INSERT INTO users (id, email, password_hash, display_name, phone_dial_code, phone_number, status, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?)
-                    """,
-                    u.id(), u.email(), passwordEncoder.encode(u.password()),
-                    u.displayName(), u.phoneDialCode(), u.phoneNumber(),
-                    Timestamp.from(now), Timestamp.from(now));
-
-            jdbcTemplate.update("""
-                    INSERT INTO user_roles (user_id, role_id)
-                    SELECT ?, id FROM roles WHERE name = ?
-                    """,
-                    u.id(), DEFAULT_ROLE_NAME);
-        }
-
-        for (SeedDatasetRequest.RideSeed r : req.rides()) {
-            UUID driverId = jdbcTemplate.queryForObject(
-                    "SELECT id FROM users WHERE email = ?", UUID.class, r.driverEmail());
-
-            jdbcTemplate.update("""
-                    INSERT INTO rides (id, driver_id, from_location, to_location, departure_time, total_seats, available_seats, status, version, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', 0, ?, ?)
-                    """,
-                    r.id(), driverId, r.from(), r.to(),
-                    Timestamp.from(r.departureTime()), r.totalSeats(), r.totalSeats(),
-                    Timestamp.from(now), Timestamp.from(now));
-        }
-
-        for (SeedDatasetRequest.BookingSeed b : req.bookings()) {
-            UUID passengerId = jdbcTemplate.queryForObject(
-                    "SELECT id FROM users WHERE email = ?", UUID.class, b.passengerEmail());
-
-            jdbcTemplate.update("""
-                    INSERT INTO booking_requests (id, ride_id, passenger_id, status, requested_at, version, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, 0, ?, ?)
-                    """,
-                    b.id(), b.rideId(), passengerId, b.status(),
-                    Timestamp.from(now), Timestamp.from(now), Timestamp.from(now));
-        }
+        jdbcTemplate.batchUpdate(
+                """
+                INSERT INTO users (id, email, password_hash, display_name, phone_dial_code, phone_number, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?)
+                """,
+                rows, rows.size(),
+                (ps, row) -> {
+                    ps.setObject(1, row.id());
+                    ps.setString(2, row.email());
+                    ps.setString(3, passwordEncoder.encode(row.password()));
+                    ps.setString(4, row.displayName());
+                    ps.setString(5, row.phoneDialCode());
+                    ps.setString(6, row.phoneNumber());
+                    ps.setTimestamp(7, Timestamp.from(now));
+                    ps.setTimestamp(8, Timestamp.from(now));
+                });
     }
 
-    private UserView ensureUser(String email, String displayName, String phoneDialCode, String phoneNumber) {
-        return userService.findByEmail(email)
-                .orElseGet(() -> userService.createUser(new CreateUserCommand(
-                        email,
-                        passwordEncoder.encode(DEFAULT_PASSWORD),
-                        displayName,
-                        phoneDialCode,
-                        phoneNumber
-                )));
+    public void seedUserRoles(List<UserRoleRow> rows) {
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)",
+                rows, rows.size(),
+                (ps, row) -> {
+                    ps.setObject(1, row.userId());
+                    ps.setObject(2, row.roleId());
+                });
     }
 
-    record SeededUsersResponse(String driverUserId, String passengerUserId, String password) {
+    public void seedRides(List<RideRow> rows) {
+        Instant now = Instant.now();
+        jdbcTemplate.batchUpdate(
+                """
+                INSERT INTO rides (id, driver_id, from_location, to_location, departure_time, total_seats, available_seats, status, version, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', 0, ?, ?)
+                """,
+                rows, rows.size(),
+                (ps, row) -> {
+                    ps.setObject(1, row.id());
+                    ps.setObject(2, row.driverId());
+                    ps.setString(3, row.from());
+                    ps.setString(4, row.to());
+                    ps.setTimestamp(5, Timestamp.from(row.departureTime()));
+                    ps.setInt(6, row.totalSeats());
+                    ps.setInt(7, row.totalSeats()); // available_seats = total_seats on initial seed
+                    ps.setTimestamp(8, Timestamp.from(now));
+                    ps.setTimestamp(9, Timestamp.from(now));
+                });
     }
 
-    record SeedRideRequest(String driverEmail, String from, String to, Instant departureTime, int totalSeats) {
+    public void seedBookings(List<BookingRow> rows) {
+        Instant now = Instant.now();
+        jdbcTemplate.batchUpdate(
+                """
+                INSERT INTO booking_requests (id, ride_id, passenger_id, status, requested_at, version, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+                """,
+                rows, rows.size(),
+                (ps, row) -> {
+                    ps.setObject(1, row.id());
+                    ps.setObject(2, row.rideId());
+                    ps.setObject(3, row.passengerId());
+                    ps.setString(4, row.status());
+                    ps.setTimestamp(5, Timestamp.from(now));
+                    ps.setTimestamp(6, Timestamp.from(now));
+                    ps.setTimestamp(7, Timestamp.from(now));
+                });
     }
 
-    record SeedDatasetRequest(
-            List<UserSeed> users,
-            List<RideSeed> rides,
-            List<BookingSeed> bookings
-    ) {
-        record UserSeed(UUID id, String email, String password, String displayName,
-                        String phoneDialCode, String phoneNumber) {}
+    public record RoleRow(UUID id, String name) {}
 
-        record RideSeed(UUID id, String driverEmail, String from, String to,
-                        Instant departureTime, int totalSeats) {}
+    public record UserRow(UUID id, String email, String password,
+                          String displayName, String phoneDialCode, String phoneNumber) {}
 
-        record BookingSeed(UUID id, UUID rideId, String passengerEmail, String status) {}
-    }
+    public record UserRoleRow(UUID userId, UUID roleId) {}
+
+    public record RideRow(UUID id, UUID driverId, String from, String to,
+                          Instant departureTime, int totalSeats) {}
+
+    public record BookingRow(UUID id, UUID rideId, UUID passengerId, String status) {}
+
+
 }

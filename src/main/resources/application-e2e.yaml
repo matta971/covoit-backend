@@ -49,5 +49,3 @@ app:
     refresh-token-expiration-seconds: 2592000
     issuer: covoit-backend
     audience: covoit-app
-
-

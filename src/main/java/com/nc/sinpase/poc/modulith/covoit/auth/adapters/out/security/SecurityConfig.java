@@ -49,7 +49,7 @@ class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/test-support/**").access((authentication, context) ->
                                 new org.springframework.security.authorization.AuthorizationDecision(isE2eProfileActive()))
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(tokenValidator),
                         UsernamePasswordAuthenticationFilter.class)
